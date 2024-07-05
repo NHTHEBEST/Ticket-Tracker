@@ -1,17 +1,39 @@
-DROP TABLE IF EXISTS user;
-DROP TABLE IF EXISTS post;
+DROP TABLE IF EXISTS customers;
+DROP TABLE IF EXISTS orders;
+DROP TABLE IF EXISTS users;
 
-CREATE TABLE user (
+
+CREATE TABLE customers (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
-  username TEXT UNIQUE NOT NULL,
-  password TEXT NOT NULL
+  name TEXT,
+  email TEXT,
+  phone TEXT,
+  sec_key TEXT,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE TABLE post (
+CREATE TABLE orders (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
-  author_id INTEGER NOT NULL,
-  created TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  title TEXT NOT NULL,
-  body TEXT NOT NULL,
-  FOREIGN KEY (author_id) REFERENCES user (id)
+  invoice_no INTEGER,
+  cutomer_id INTEGER,
+  contents TEXT,
+  order_stat TEXT,
+  due_date TIMESTAMP,
+  expected_date TIMESTAMP,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (cutomer_id) REFERENCES customers
 );
+
+CREATE TABLE users (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  username TEXT,
+  password TEXT,
+  perm INTEGER,
+  authkey TEXT,
+  key_exp TIMESTAMP,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+-- create admin api user admin:notsosecure
+INSERT INTO users (username, password, perm) VALUES ('admin', 'pbkdf2:sha256:600000$d2bp01YZqaJNNkaG$0bcb7faa74e6255adcffe3df9af68764493a90facda54daf5fdcb046fa2a3260', 0); 
+

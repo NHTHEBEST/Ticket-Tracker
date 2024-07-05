@@ -30,5 +30,7 @@ def create_app(test_config=None):
     @app.route('/hello')
     def hello():
         return 'Hello, World!'
- 
+    
+    from . import api
+    app.register_blueprint(api.bp)
     return app
