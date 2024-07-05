@@ -20,6 +20,8 @@ CREATE TABLE orders (
   order_stat TEXT,
   due_date DATE,
   expected_date DATE,
+  price INTEGER,
+  paid INTEGER,
   done INTEGER DEFAULT 0,
   created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   FOREIGN KEY (cutomer_id) REFERENCES customers

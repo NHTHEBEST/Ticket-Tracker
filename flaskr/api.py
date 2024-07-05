@@ -67,13 +67,13 @@ def create_order():
     req = request.json
     
     if 'customer' not in req.keys():
-        return "No Customer"
+        return "No Customer",400
     if 'invoice' not in req.keys():
-        return "No Invoice"
+        return "No Invoice",400
     if 'order' not in req.keys():
-        return "No Order"
+        return "No Order",400
     if 'due' not in req.keys():
-        return "No Due Date"
+        return "No Due Date",400
     
     inv_no = req['invoice']
     cust_no = req['customer']
@@ -88,7 +88,7 @@ def create_order():
         'SELECT * FROM customers WHERE id = ? ', (cust_no,)
     ).fetchone()
     if customer is None:
-        return "No customer in DB"
+        return "No customer in DB",400
     
     try:
         db.execute(
@@ -97,7 +97,7 @@ def create_order():
         )
         db.commit()
     except db.IntegrityError:
-        return "db IntegrityError"
+        return "db IntegrityError",500
     
     return "OK"
     
@@ -110,6 +110,7 @@ def create_customer():
     #order number
     if not AUTH(1):
         return "AUTH ERROR",403
+    return "inop" , 501
 
 @bp.route('/get_order')
 def get_order():
@@ -119,6 +120,7 @@ def get_order():
     # only able to get own orders
     if not AUTH(3):
         return "AUTH ERROR",403
+    return "inop" , 501
 
 @bp.route('/get_customer')
 def get_customer():
@@ -128,16 +130,24 @@ def get_customer():
     # auth
     # usertype
     #order number
+    return "inop" , 501
 
+# list all customers
 
+"""
+oderd should contain price and amount paid
+"""
 
-@bp.route('/update_order_status', methods=['POST'])
-def update_order_status():
+# get orders from all customers
+
+@bp.route('/update_order', methods=['POST'])
+def update_order():
     if not AUTH(1):
         return "AUTH ERROR",403
+    return "inop" , 501
 
 @bp.route('/todo', methods=['GET'])
-def todo():
+def todo(): # order by due date
     if not AUTH(2):
         return "AUTH ERROR",403
     db = get_db()
@@ -155,9 +165,9 @@ def AUTH():
     req = request.json
     
     if 'user' not in req.keys():
-        return "No User"
+        return "No User",400
     if 'pass' not in req.keys():
-        return "No Pass"
+        return "No Pass",400
     
     user = req['user']
     passw = req['pass']
@@ -168,9 +178,9 @@ def AUTH():
     ).fetchone()
     
     if user is None:
-        return "No User"
+        return "No User",400
     elif not check_password_hash(user['password'], passw):
-        return "Wrong Pass"
+        return "Wrong Pass",403
     
     key = secrets.token_hex(42)
     db = get_db()
@@ -181,7 +191,7 @@ def AUTH():
         )
         db.commit()
     except db.IntegrityError:
-        return "db IntegrityError"
+        return "db IntegrityError",500
     
     return key
     
@@ -192,11 +202,11 @@ def new_user():
         return "AUTH ERROR",403
     req = request.json
     if 'user' not in req.keys():
-        return "No User"
+        return "No User",400
     if 'pass' not in req.keys():
-        return "No Pass"
+        return "No Pass",400
     if 'perm' not in req.keys():
-        return "No Perm"
+        return "No Perm",400
     db = get_db()
     
     try: 
@@ -206,7 +216,7 @@ def new_user():
         )
         db.commit()
     except db.IntegrityError:
-        return "db IntegrityError"
+        return "db IntegrityError",500
     
     return "OK"
 
@@ -216,13 +226,13 @@ def cheange_user():
         return "AUTH ERROR",403
     req = request.json
     if 'user' not in req.keys():
-        return "No User"
+        return "No User",400
     if 'pass' not in req.keys():
-        return "No Pass"
+        return "No Pass",400
     if 'perm' not in req.keys():
-        return "No Perm"
+        return "No Perm",400
     # only allow to change current user
-    return "inop" , 500
+    return "inop" , 501
 
 
 
@@ -232,3 +242,25 @@ def cheange_user():
 # 2 read only
 # 0-2 can change own password
 # 3 own files only (for customers)
+
+
+
+"""
+add customers
+to each customer add order
+to each order add notes.
+orders have internal todo list
+view all orders
+
+everything search
+
+go from order to cust visvers
+
+inv no optional but required to complete (done to 1)
+
+
+bybass everything?
+
+
+XERO intergration
+"""
