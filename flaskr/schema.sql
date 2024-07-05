@@ -18,8 +18,9 @@ CREATE TABLE orders (
   cutomer_id INTEGER,
   contents TEXT,
   order_stat TEXT,
-  due_date TIMESTAMP,
-  expected_date TIMESTAMP,
+  due_date DATE,
+  expected_date DATE,
+  done INTEGER DEFAULT 0,
   created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   FOREIGN KEY (cutomer_id) REFERENCES customers
 );
@@ -37,3 +38,6 @@ CREATE TABLE users (
 -- create admin api user admin:notsosecure
 INSERT INTO users (username, password, perm) VALUES ('admin', 'pbkdf2:sha256:600000$d2bp01YZqaJNNkaG$0bcb7faa74e6255adcffe3df9af68764493a90facda54daf5fdcb046fa2a3260', 0); 
 
+-- create testing customer
+
+INSERT INTO customers (name) VALUES ('tester');

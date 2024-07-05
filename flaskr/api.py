@@ -5,29 +5,37 @@ from flask import(
 from flaskr.db import get_db
 import datetime, json, secrets
 
+from .helpers import dict_from_row, json_addons
+
 from werkzeug.security import check_password_hash, generate_password_hash
 
 bp = Blueprint('api', __name__, url_prefix='/api')
 
-def check_key(key):    
+# perm levels
+# 0 full acsess
+# 1 all but user
+# 2 read only
+# 0-2 can change own password
+# 3 own files only (for customers)
+def check_key(key, perm_level):    
     # initialize database connection
     db = get_db() 
     
     # check if key exists
     user = db.execute(
-        'SELECT * FROM users WHERE authkey = ? ', (key)
+        'SELECT * FROM users WHERE authkey = ? ', (key,)
     ).fetchone()
+    
     if user is None:
-        return False
+        return 1#False
     
     # Check if permissions
-    if user["perm"] > 1:
-        return False
+    if user["perm"] > perm_level:
+        return 2#False
     
     # Check if key expired
-    keyExpiryDate = datetime.strptime(user["key_exp"], '%a %B %d %H:%M:%S +0800 %Y')
-    if keyExpiryDate >= datetime.datetime.now():
-        return False
+    if user["key_exp"] >= datetime.datetime.now():
+        return 3#False
 
     # update key
     try: 
@@ -37,20 +45,25 @@ def check_key(key):
         )
         db.commit() 
     except db.IntegrityError:
-        return "db IntegrityError"
+        return False
     #close db
     db.close()
     #Auth user
     return True
 
+def AUTH(perm):
+    if 'AUTH' in request.headers:
+        return check_key(request.headers['AUTH'], perm)
+    return False
+
 @bp.route('/test')
 def test():
-   # print(check_key("kjhsdvkjsdjfkhsdkj"))
-    return "xx",500
+    return str(check_key(request.headers['AUTH'],0))
 
 @bp.route('/create_order', methods=['POST'])
 def create_order():
-    #auth
+    if not AUTH(1):
+        return "AUTH ERROR",403
     req = request.json
     
     if 'customer' not in req.keys():
@@ -95,30 +108,47 @@ def create_customer():
     # auth
     # usertype
     #order number
-    pass
+    if not AUTH(1):
+        return "AUTH ERROR",403
 
 @bp.route('/get_order')
 def get_order():
     # auth
     # usertype
     #order number
-    pass
+    # only able to get own orders
+    if not AUTH(3):
+        return "AUTH ERROR",403
 
 @bp.route('/get_customer')
 def get_customer():
+    if not AUTH(2):
+        return "AUTH ERROR",403
+    db = get_db()
     # auth
     # usertype
     #order number
-    pass
+
 
 
 @bp.route('/update_order_status', methods=['POST'])
 def update_order_status():
-    pass
+    if not AUTH(1):
+        return "AUTH ERROR",403
 
-@bp.route('/todo', methods=['POST'])
+@bp.route('/todo', methods=['GET'])
 def todo():
-    pass
+    if not AUTH(2):
+        return "AUTH ERROR",403
+    db = get_db()
+    #data = db.execute("SELECT * FROM users").fetchall()
+    #data = db.execute("SELECT * FROM orders").fetchall()
+    data = db.execute("SELECT * FROM orders WHERE done = 0").fetchall()
+    ret = []
+    for x in data:
+        ret.append(dict_from_row(x))
+    return json.dumps(ret, default=json_addons)
+    
 
 @bp.route('/auth', methods=['POST'])
 def AUTH():
@@ -147,7 +177,7 @@ def AUTH():
     try: 
         db.execute(
             "UPDATE users SET authkey = ?, key_exp = ? WHERE id = ?", 
-            (key, datetime.datetime.now()+datetime.timedelta(hours=50), user['id'])
+            (key, datetime.datetime.now()-datetime.timedelta(hours=50), user['id'])
         )
         db.commit()
     except db.IntegrityError:
@@ -158,7 +188,8 @@ def AUTH():
     
 @bp.route("/new_user", methods=['POST'])
 def new_user():
-    #AUTH
+    if not AUTH(0):
+        return "AUTH ERROR",403
     req = request.json
     if 'user' not in req.keys():
         return "No User"
@@ -178,3 +209,26 @@ def new_user():
         return "db IntegrityError"
     
     return "OK"
+
+@bp.route('/change_user', methods=['POST'])
+def cheange_user():
+    if not AUTH(1):
+        return "AUTH ERROR",403
+    req = request.json
+    if 'user' not in req.keys():
+        return "No User"
+    if 'pass' not in req.keys():
+        return "No Pass"
+    if 'perm' not in req.keys():
+        return "No Perm"
+    # only allow to change current user
+    return "inop" , 500
+
+
+
+# perm levels
+# 0 full acsess
+# 1 all but user
+# 2 read only
+# 0-2 can change own password
+# 3 own files only (for customers)
