@@ -8,7 +8,7 @@ CREATE TABLE customers (
   name TEXT,
   email TEXT,
   phone TEXT,
-  sec_key TEXT,
+  authkey TEXT,
   created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
@@ -42,4 +42,4 @@ INSERT INTO users (username, password, perm) VALUES ('admin', 'pbkdf2:sha256:600
 
 -- create testing customer
 
-INSERT INTO customers (name) VALUES ('tester');
+INSERT INTO customers (name) VALUES ('CASHSALE');

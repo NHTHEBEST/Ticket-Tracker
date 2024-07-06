@@ -20,10 +20,10 @@ bp = Blueprint('api', __name__, url_prefix='/api')
 def check_key(key, perm_level):    
     # initialize database connection
     db = get_db() 
-    
+    database = 'users'
     # check if key exists
     user = db.execute(
-        'SELECT * FROM users WHERE authkey = ? ', (key,)
+        'SELECT * FROM ? WHERE authkey = ? ', (key,)
     ).fetchone()
     
     if user is None:
@@ -60,6 +60,8 @@ def AUTH(perm):
 def test():
     return str(check_key(request.headers['AUTH'],0))
 
+
+# add order price and amount paid
 @bp.route('/create_order', methods=['POST'])
 def create_order():
     if not AUTH(1):
@@ -103,13 +105,31 @@ def create_order():
     
 
 
-@bp.route('/create_customer')
+@bp.route('/create_customer', methods=['POST'])
 def create_customer():
-    # auth
-    # usertype
-    #order number
     if not AUTH(1):
         return "AUTH ERROR",403
+    
+    req = request.json
+    if 'name' not in req.keys():
+        return "No Name",400
+    if 'email' not in req.keys():
+        return "No Email",400
+    if 'phone' not in req.keys():
+        return "No Phone",400
+    
+    seckey = secrets.token_urlsafe(64)
+    
+    db = get_db()
+    try:
+        db.execute(
+            "INSERT INTO customers (name, email, phone, authkey) VALUES (?,?,?,?)",
+            (req['name'], req['email'], req['phone'], seckey)
+        )
+        db.commit()
+    except db.IntegrityError:
+        return "db IntegrityError",500
+    return 'OK'
     return "inop" , 501
 
 @bp.route('/get_order')
@@ -161,7 +181,7 @@ def todo(): # order by due date
     
 
 @bp.route('/auth', methods=['POST'])
-def AUTH():
+def AUTH_site():
     req = request.json
     
     if 'user' not in req.keys():

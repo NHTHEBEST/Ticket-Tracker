@@ -26,11 +26,13 @@ def create_app(test_config=None):
     except OSError:
         pass
 
-    # a simple page that says hello
-    @app.route('/hello')
-    def hello():
+    # homepage
+    @app.route('/')
+    def home():
         return 'Hello, World!'
     
+    #import api system
     from . import api
     app.register_blueprint(api.bp)
+    
     return app
