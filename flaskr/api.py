@@ -76,6 +76,11 @@ def create_order():
         return "No Order",400
     if 'due' not in req.keys():
         return "No Due Date",400
+    if 'price' not in req.keys():
+        return "No Price",400
+    if 'paid' not in req.keys():
+        return "No Paid",400
+    
     
     inv_no = req['invoice']
     cust_no = req['customer']
@@ -94,8 +99,8 @@ def create_order():
     
     try:
         db.execute(
-            "INSERT INTO orders (invoice_no, cutomer_id, contents, order_stat, due_date, expected_date) VALUES (?,?,?,?,?,?)",
-            (inv_no, cust_no, contents, status, due, due)
+            "INSERT INTO orders (invoice_no, cutomer_id, contents, order_stat, due_date, expected_date, price, paid) VALUES (?,?,?,?,?,?,?,?)",
+            (inv_no, cust_no, contents, status, due, due, req['price'], req['paid'])
         )
         db.commit()
     except db.IntegrityError:
@@ -142,7 +147,7 @@ def get_order():
         return "AUTH ERROR",403
     return "inop" , 501
 
-@bp.route('/get_customer')
+@bp.route('/get_customer') # INOP
 def get_customer():
     if not AUTH(2):
         return "AUTH ERROR",403
@@ -164,7 +169,61 @@ oderd should contain price and amount paid
 def update_order():
     if not AUTH(1):
         return "AUTH ERROR",403
-    return "inop" , 501
+    req = request.json
+    
+    if 'invoice' not in req.keys():
+        return "No Invoice",400
+    if 'order' not in req.keys():
+        return "No Order",400
+    if 'expected' not in req.keys():
+        return "No Due Date",400
+    if 'price' not in req.keys():
+        return "No Price",400
+    if 'paid' not in req.keys():
+        return "No Paid",400
+    if 'status'  not in req.keys():
+        return "No Status", 400
+    db = get_db()
+    try:
+        db.execute(
+            "INSERT INTO orders (invoice_no, contents, order_stat, expected_date, price, paid) VALUES (?,?,?,?,?,?)",
+            (req['invoice'], req['order'], req['status'], req['expected'], req['price'], req['paid'])
+        )
+        db.commit()
+    except db.IntegrityError:
+        return "db IntegrityError",500
+    return "OK"
+
+
+#mark done call
+@bp.route('/done', methods=['POST'])
+def done():
+    if not AUTH(1):
+        return "AUTH ERROR", 403
+    req = request.json
+    if 'order' not in req.keys():
+        return "No Invoice",400
+    db = get_db()
+    row = db.execute('SELECT * FROM orders WHERE id = ?', req['order']).fetchone()
+    
+    # check inv no
+    
+    # check paid
+    if row['paid'] != row['price']:
+        return 'Not Paid', 304
+    
+    try: 
+        db.execute(
+            "UPDATE order SET done = 1 WHERE id = ?", req['order']
+        )
+        db.commit() 
+    except db.IntegrityError:
+        return "DB Integrity Error", 500
+    return 'OK'
+    
+    
+    
+
 
 @bp.route('/todo', methods=['GET'])
 def todo(): # order by due date

@@ -43,3 +43,4 @@ INSERT INTO users (username, password, perm) VALUES ('admin', 'pbkdf2:sha256:600
 -- create testing customer
 
 INSERT INTO customers (name) VALUES ('CASHSALE');
+
