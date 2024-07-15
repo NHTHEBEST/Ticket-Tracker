@@ -19,7 +19,7 @@ CREATE TABLE orders (
   contents TEXT,
   order_stat TEXT,
   due_date DATE,
-  expected_date DATE,
+  expected_date TEXT,
   price INTEGER,
   paid INTEGER,
   done INTEGER DEFAULT 0,
@@ -43,4 +43,3 @@ INSERT INTO users (username, password, perm) VALUES ('admin', 'pbkdf2:sha256:600
 -- create testing customer
 
 INSERT INTO customers (name) VALUES ('CASHSALE');
-

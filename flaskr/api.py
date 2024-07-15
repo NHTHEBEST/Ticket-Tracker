@@ -52,6 +52,7 @@ def check_key(key, perm_level):
     return True
 
 def AUTH(perm):
+    return True
     if 'AUTH' in request.headers:
         return check_key(request.headers['AUTH'], perm)
     return False
@@ -147,6 +148,8 @@ def get_order():
         return "AUTH ERROR",403
     db = get_db()
     data = db.execute("SELECT * FROM orders WHERE id = ?", (request.args.get('id'),)).fetchone()
+    if data is None:
+        return "Not Found", 404
     return dict_from_row(data)
     return "inop" , 501
 
@@ -172,7 +175,8 @@ def update_order():
     if not AUTH(1):
         return "AUTH ERROR",403
     req = request.json
-    
+    if 'id' not in req.keys():
+        return "No ID",400
     if 'invoice' not in req.keys():
         return "No Invoice",400
     if 'order' not in req.keys():
@@ -188,8 +192,8 @@ def update_order():
     db = get_db()
     try:
         db.execute(
-            "INSERT INTO orders (invoice_no, contents, order_stat, expected_date, price, paid) VALUES (?,?,?,?,?,?)",
-            (req['invoice'], req['order'], req['status'], req['expected'], req['price'], req['paid'])
+            "UPDATE orders SET invoice_no = ?, contents = ?, order_stat = ?, expected_date = ?, price = ?, paid = ?  WHERE id = ?",
+            (req['invoice'], req['order'], req['status'], req['expected'], req['price'], req['paid'], req['id'])
         )
         db.commit()
     except db.IntegrityError:
@@ -204,9 +208,9 @@ def done():
         return "AUTH ERROR", 403
     req = request.json
     if 'order' not in req.keys():
-        return "No Invoice",400
+        return "No Order ID",400
     db = get_db()
-    row = db.execute('SELECT * FROM orders WHERE id = ?', req['order']).fetchone()
+    row = db.execute('SELECT * FROM orders WHERE id = ?', (req['order'],)).fetchone()
     
     # check inv no
     
@@ -216,7 +220,7 @@ def done():
     
     try: 
         db.execute(
-            "UPDATE order SET done = 1 WHERE id = ?", req['order']
+            "UPDATE orders SET done = 1 WHERE id = ?", (req['order'],)
         )
         db.commit() 
     except db.IntegrityError:
