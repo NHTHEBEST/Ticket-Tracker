@@ -23,31 +23,31 @@ def check_key(key, perm_level):
     database = 'users'
     # check if key exists
     user = db.execute(
-        'SELECT * FROM ? WHERE authkey = ? ', (key,)
+        'SELECT * FROM users WHERE authkey = ? ', (key,)
     ).fetchone()
     
     if user is None:
-        return 1#False
+        return False
     
     # Check if permissions
     if user["perm"] > perm_level:
-        return 2#False
+        return False
     
     # Check if key expired
     if user["key_exp"] >= datetime.datetime.now():
-        return 3#False
+        return False
 
     # update key
     try: 
         db.execute(
             "UPDATE users SET key_exp = ? WHERE id = ?", 
-            (datetime.datetime.now()+datetime.timedelta(hours=50), user['id'])
+            (datetime.datetime.now()-datetime.timedelta(hours=50), user['id'])
         )
         db.commit() 
     except db.IntegrityError:
         return False
     #close db
-    db.close()
+    
     #Auth user
     return True
 
@@ -145,6 +145,9 @@ def get_order():
     # only able to get own orders
     if not AUTH(3):
         return "AUTH ERROR",403
+    db = get_db()
+    data = db.execute("SELECT * FROM orders WHERE id = ?", (request.args.get('id'),)).fetchone()
+    return dict_from_row(data)
     return "inop" , 501
 
 @bp.route('/get_customer') # INOP
@@ -152,9 +155,8 @@ def get_customer():
     if not AUTH(2):
         return "AUTH ERROR",403
     db = get_db()
-    # auth
-    # usertype
-    #order number
+    data = db.execute("SELECT * FROM customers WHERE id = ?", (request.args.get('id'),)).fetchone()
+    return dict_from_row(data)
     return "inop" , 501
 
 # list all customers
